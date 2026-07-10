@@ -10,7 +10,7 @@ import Foundation
 /// Type-erased `DeepLinkParser`, so parsers of the same `Route` can be stored
 /// together.
 public struct AnyDeepLinkParser<R: Route>: DeepLinkParser {
-    private let _parse: (URL) -> DeepLinkDestination<R>?
+    private let _parse: @Sendable (URL) -> DeepLinkDestination<R>?
 
     public init<P: DeepLinkParser>(_ parser: P) where P.R == R {
         _parse = parser.parse

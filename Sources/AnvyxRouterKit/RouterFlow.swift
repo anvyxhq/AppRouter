@@ -40,7 +40,7 @@ public final class RouterFlowPresenter<R: Route> {
         self.router = router
     }
 
-    deinit {
+    isolated deinit {
         // Continuations must always be resumed; fail any still pending.
         for cont in pending.values {
             cont.resume(throwing: FlowPresentationError.cancelled)
@@ -77,7 +77,7 @@ public final class RouterFlowPresenter<R: Route> {
     }
 
     /// Report a successful result for the presentation awaiting `token`.
-    public func resolve<Value>(token: AnyHashable, with value: Value) {
+    public func resolve<Value>(token: AnyHashable, with value: sending Value) {
         pending.removeValue(forKey: token)?.resume(returning: value)
     }
 
