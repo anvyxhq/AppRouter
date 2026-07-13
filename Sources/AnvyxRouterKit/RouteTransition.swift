@@ -8,8 +8,8 @@
 import SwiftUI
 
 /// A catalogue of reusable content transitions, so screen/motion changes stay
-/// consistent across the app. Apply with ``SwiftUI/View/routeTransition(_:)`` or
-/// use the raw ``AnyTransition`` values directly with `.transition(_:)`.
+/// consistent across the app. Apply with `View.routeTransition(_:)` or
+/// use the raw `AnyTransition` values directly with `.transition(_:)`.
 public enum RouteTransition {
 
     /// iOS-style push: in from the trailing edge, out to the leading edge (fading).
