@@ -31,7 +31,9 @@ public protocol FlowStepRunning {
     /// Perform `step` and return the new accumulated state.
     ///
     /// Throws to abort the flow; ``Flow/run(from:onStateChange:)`` propagates
-    /// the error to its caller without catching it.
+    /// the error to its caller without catching it, and
+    /// ``Flow/runPreservingState(from:onStateChange:)`` wraps it in a
+    /// ``FlowError`` together with the state gathered so far.
     func run(_ step: Step, in state: State) async throws -> State
 }
 
@@ -69,6 +71,9 @@ public struct Flow<Runner: FlowStepRunning> {
 
     /// Run every non-skipped step in order, starting from `initialState`.
     ///
+    /// A failing step's error is rethrown as-is, which drops the state gathered
+    /// so far. Use ``runPreservingState(from:onStateChange:)`` to keep it.
+    ///
     /// - Parameter onStateChange: called with the new state after each step completes,
     ///   e.g. to persist partial progress so a mid-flow failure can still surface it.
     /// - Returns: the final accumulated state.
@@ -80,6 +85,61 @@ public struct Flow<Runner: FlowStepRunning> {
         var state = initialState
         for step in steps where runner.shouldRun(step, in: state) {
             state = try await runner.run(step, in: state)
+            onStateChange?(state)
+        }
+        return state
+    }
+}
+
+/// The failure of a ``Flow`` run, carrying the state gathered before the
+/// failing step so callers can keep, persist or resume from it.
+///
+/// Thrown by ``Flow/runPreservingState(from:onStateChange:)``.
+public struct FlowError<State: Sendable>: Error {
+    /// The error thrown by the failing step (for example
+    /// ``FlowPresentationError/dismissedByUser`` or a `CancellationError`).
+    public let underlying: any Error
+    /// The state accumulated by every step that completed before the failure;
+    /// equal to the initial state when the first step fails.
+    public let partialState: State
+
+    public init(underlying: any Error, partialState: State) {
+        self.underlying = underlying
+        self.partialState = partialState
+    }
+}
+
+public extension Flow where Runner.State: Sendable {
+    /// Run every non-skipped step in order, like ``run(from:onStateChange:)``,
+    /// but report a failure together with the state gathered so far.
+    ///
+    /// ```swift
+    /// do {
+    ///     let final = try await flow.runPreservingState(from: .initial)
+    ///     finish(with: final)
+    /// } catch {
+    ///     // `error` is a `FlowError<SignupState>`
+    ///     saveDraft(error.partialState)
+    ///     if case FlowPresentationError.dismissedByUser = error.underlying { return }
+    ///     show(error.underlying)
+    /// }
+    /// ```
+    ///
+    /// - Parameter onStateChange: called with the new state after each step completes.
+    /// - Returns: the final accumulated state.
+    /// - Throws: ``FlowError`` wrapping the failing step's error and the partial state.
+    @discardableResult
+    func runPreservingState(
+        from initialState: Runner.State,
+        onStateChange: ((Runner.State) -> Void)? = nil
+    ) async throws(FlowError<Runner.State>) -> Runner.State {
+        var state = initialState
+        for step in steps where runner.shouldRun(step, in: state) {
+            do {
+                state = try await runner.run(step, in: state)
+            } catch {
+                throw FlowError(underlying: error, partialState: state)
+            }
             onStateChange?(state)
         }
         return state

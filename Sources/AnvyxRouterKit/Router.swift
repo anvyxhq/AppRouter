@@ -29,11 +29,33 @@ public protocol Route: Hashable {}
 @MainActor
 @Observable
 public final class Router<R: Route> {
-    public var path = NavigationPath()
-    public var sheet: R?
-    public var cover: R?
+    public var path = NavigationPath() { didSet { notifyChange() } }
+    public var sheet: R? { didSet { notifyChange() } }
+    public var cover: R? { didSet { notifyChange() } }
+
+    @ObservationIgnored
+    private var changeObservers: [UUID: @MainActor () -> Void] = [:]
 
     public init() {}
+
+    // MARK: Change observation
+
+    /// Register `observer` to run after every change to ``path``, ``sheet`` or
+    /// ``cover`` — including changes SwiftUI writes through the bindings (back
+    /// swipe, interactive sheet dismissal). Returns an id for ``removeChangeObserver(_:)``.
+    func addChangeObserver(_ observer: @escaping @MainActor () -> Void) -> UUID {
+        let id = UUID()
+        changeObservers[id] = observer
+        return id
+    }
+
+    func removeChangeObserver(_ id: UUID) {
+        changeObservers[id] = nil
+    }
+
+    private func notifyChange() {
+        for observer in Array(changeObservers.values) { observer() }
+    }
 
     // MARK: Stack
 

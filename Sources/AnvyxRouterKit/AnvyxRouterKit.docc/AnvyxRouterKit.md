@@ -36,7 +36,10 @@ router.open(url, using: linkRegistry)      // universal links -> routes
 ### Flows
 - ``Flow``
 - ``FlowStep``
+- ``FlowStepRunning``
+- ``FlowError``
 - ``RouterFlowPresenter``
+- ``FlowPresentationError``
 
 ### Transitions
 - ``RouteTransition``
