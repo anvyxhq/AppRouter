@@ -2,7 +2,7 @@
 
 > Type-safe navigation, deep linking, and multi-step flows for SwiftUI apps.
 
-![Swift](https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![Platform](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple)
 ![SPM](https://img.shields.io/badge/SwiftPM-compatible-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
@@ -21,7 +21,7 @@ No third-party dependencies.
 ## Requirements
 
 - iOS 17.0+
-- Swift 5.9+ / Xcode 16+
+- Swift 6.2+ / Xcode 26+
 
 ## Installation
 
